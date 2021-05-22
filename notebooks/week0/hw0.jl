@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.12.20
+# v0.14.5
 
 using Markdown
 using InteractiveUtils
@@ -11,6 +11,28 @@ macro bind(def, element)
         global $(esc(def)) = Core.applicable(Base.get, el) ? Base.get(el) : missing
         el
     end
+end
+
+# ╔═╡ 851c03a4-e7a4-11ea-1652-d59b7a6599f0
+# setting up an empty package environment
+begin
+	import Pkg
+	Pkg.activate(mktempdir())
+	Pkg.Registry.update()
+end
+
+# ╔═╡ d6ee91ea-e750-11ea-1260-31ebf3ec6a9b
+# add (ie install) a package to our environment
+begin
+	Pkg.add("Compose")
+	# call `using` so that we can use it in our code
+	using Compose
+end
+
+# ╔═╡ 5acd58e0-e856-11ea-2d3d-8329889fe16f
+begin
+	Pkg.add("PlutoUI")
+	using PlutoUI
 end
 
 # ╔═╡ fafae38e-e852-11ea-1208-732b4744e4c2
@@ -85,7 +107,7 @@ Output: $x^2$
 
 # ╔═╡ e02f7ea6-7024-11eb-3672-fd59a6cff79b
 function basic_square(x)
-	return 1 # this is wrong, write your code here!
+	return x * x
 end
 
 # ╔═╡ 6acef56c-7025-11eb-2524-819c30a75d39
@@ -155,7 +177,9 @@ This is because the square root must be between the numbers `x/a` and `a`. Why?
 
 # ╔═╡ bccf0e88-e754-11ea-3ab8-0170c2d44628
 ex_1_1 = md"""
-your answer here
+If $a = \sqrt{x} \quad \Rightarrow \quad x / a = \sqrt{x}.$ 
+If $a < \sqrt{x} \quad \Rightarrow \quad x / a > \sqrt{x} \quad \therefore \quad a < \sqrt{x} < x / a$.
+In the other hand, if $a > \sqrt{x} \quad \Rightarrow \quad x / a < \sqrt{x} < a$. In the las two cases, the average of $a$  and $x / a$ is a better guess for the square root of $x$ than $a$.
 """ 
 
 # you might need to wait until all other cells in this notebook have completed running. 
@@ -173,7 +197,10 @@ Write a function newton_sqrt(x) which implements the above algorithm."
 
 # ╔═╡ 4896bf0c-e754-11ea-19dc-1380bb356ab6
 function newton_sqrt(x, error_margin=0.01, a=x / 2) # a=x/2 is the default value of `a`
-	return x # this is wrong, write your code here!
+	while abs(1 - x / a^2) > error_margin
+		a = (a + x / a) / 2
+	end
+	return a # this is wrong, write your code here!
 end
 
 # ╔═╡ 7a01a508-e78a-11ea-11da-999d38785348
@@ -230,33 +257,11 @@ md"To draw Sierpinski's triangle, we are going to use an external package, [_Com
 A package contains a coherent set of functionality that you can often use a black box according to its specification. There are [lots of Julia packages](https://juliahub.com/ui/Home).
 "
 
-# ╔═╡ 851c03a4-e7a4-11ea-1652-d59b7a6599f0
-# setting up an empty package environment
-begin
-	import Pkg
-	Pkg.activate(mktempdir())
-	Pkg.Registry.update()
-end
-
-# ╔═╡ d6ee91ea-e750-11ea-1260-31ebf3ec6a9b
-# add (ie install) a package to our environment
-begin
-	Pkg.add("Compose")
-	# call `using` so that we can use it in our code
-	using Compose
-end
-
-# ╔═╡ 5acd58e0-e856-11ea-2d3d-8329889fe16f
-begin
-	Pkg.add("PlutoUI")
-	using PlutoUI
-end
-
 # ╔═╡ dbc4da6a-e7b4-11ea-3b70-6f2abfcab992
 md"Just like the definition above, our `sierpinksi` function is _recursive_: it calls itself."
 
 # ╔═╡ 02b9c9d6-e752-11ea-0f32-91b7b6481684
-complexity = 3
+complexity = 5
 
 # ╔═╡ 1eb79812-e7b5-11ea-1c10-63b24803dd8a
 if complexity == 3 
@@ -290,7 +295,7 @@ area_sierpinski(1) = 0.??
 
 # ╔═╡ ca8d2f72-e7b6-11ea-1893-f1e6d0a20dc7
 function area_sierpinski(n)
-	return 1.0
+	return (3/4)^n
 end
 
 # ╔═╡ 71c78614-e7bc-11ea-0959-c7a91a10d481

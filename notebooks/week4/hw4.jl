@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.0
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -247,9 +247,21 @@ md"""
 
 # ╔═╡ abf20aa0-f31b-11ea-2548-9bea4fab4c37
 function greedy_seam(energies, starting_pixel::Int)
+	seam = [starting_pixel]
 	m,n = size(energies)
-	# you can delete the body of this function - it's just a placeholder.
-	random_seam(size(energies)..., starting_pixel)
+	
+	for row in 2:m
+		prev_pixel = seam[end]
+		aux = argmin(energies[row, clamp(prev_pixel - 1, 1, n): clamp(prev_pixel + 1, 1, n) ])
+		
+		if prev_pixel  > 1
+			aux += prev_pixel - 2
+		end
+		
+		push!(seam, aux)
+	end
+	
+	return seam
 end
 
 # ╔═╡ 5430d772-f397-11ea-2ed8-03ee06d02a22
@@ -344,12 +356,27 @@ function least_energy(energies, i, j)
 	m, n = size(energies)
 	
 	## base case
-	# if i == something
-	#    return (energies[...], ...) # no need for recursive computation in the base case!
-	# end
+	if i == m
+		# no need for recursive computation in the base case!
+		energy = energies[i, j]
+		column = j
+	else
+		## induction
+		
+		aux = [least_energy(energies, i+1, j´)[1] for j´ ∈ clamp(j-1, 1, n):clamp(j+1, 1, n)]
+		index = argmin(aux)
+
+		if j == 1
+			column = index
+		else
+			column = j - 2 + index
+		end
+		
+		energy = energies[i, j] + aux[index]
+	end
 	
-	## induction
-	# combine results from recursive calls to `least_energy`.
+	return energy, column
+
 end
 
 # ╔═╡ ad524df7-29e2-4f0d-ad72-8ecdd57e4f02
@@ -424,9 +451,16 @@ This will give you the method used in the lecture to perform [exhaustive search 
 
 # ╔═╡ 85033040-f372-11ea-2c31-bb3147de3c0d
 function recursive_seam(energies, starting_pixel)
+	seam = [starting_pixel]
 	m, n = size(energies)
-	# Replace the following line with your code.
-	[rand(1:starting_pixel) for i=1:m]
+	column = starting_pixel
+	
+	for i in 1:m-1
+		column = least_energy(energies, i, column)[2]
+		push!(seam, column)
+	end
+	
+	return seam
 end
 
 # ╔═╡ f92ac3e4-fa70-4bcf-bc50-a36792a8baaa
@@ -447,7 +481,8 @@ md"""
 
 # ╔═╡ 6d993a5c-f373-11ea-0dde-c94e3bbd1552
 exhaustive_observation = md"""
-<your answer here>
+- This algorithm does an exhaustive search because it computes the energy of all possible paths starting at certain pixel. This algorithm is terrible because it repeats certain calculations several times.
+- The possible seam grows as $3^n$.
 """
 
 # ╔═╡ ea417c2a-f373-11ea-3bb0-b1b5754f2fac
@@ -480,13 +515,37 @@ You are expected to read and understand the [documentation on dictionaries](http
 3. Access contents of the dictionary by a key.
 """
 
-# ╔═╡ b1d09bc8-f320-11ea-26bb-0101c9a204e2
+# ╔═╡ 6b0fa07c-9b7f-47cf-8df6-267c143c4608
+
 function memoized_least_energy(energies, i, j, memory::Dict)
-	m, n = size(energies)
+	if haskey(memory, (i, j))
+		energy = memory[i, j][1]
+	else
+		m, n = size(energies)
 	
-	# you should start by copying the code from 
-	# your (not-memoized) least_energies function.
+		## base case
+		if i == m
+			energy = energies[i, j]
+			column = j
+		else
+
+			## induction
+
+			aux = [memoized_least_energy(energies, i+1, j´, memory) for j´ ∈ clamp(j-1, 1, n):clamp(j+1, 1, n)]
+			index = argmin(aux)
+
+			if j == 1
+				column = index
+			else
+				column = j - 2 + index
+			end
+
+			energy = energies[i, j] + aux[index]
+			memory[i, j] = energy, column
+		end
+	end
 	
+	return energy
 end
 
 # ╔═╡ 1947f304-fa2c-4019-8584-01ef44ef2859
@@ -508,13 +567,18 @@ function memoized_recursive_seam(energies, starting_pixel)
 	# the value type (Tuple{Float64,Int}). 
 	# If you need to memoize something else, you can just use Dict() without types.
 	memory = Dict{Tuple{Int,Int},Tuple{Float64,Int}}()
+	memoized_least_energy(energies, 1, starting_pixel, memory)
 	
+	seam = [starting_pixel]
 	m, n = size(energies)
+	column = starting_pixel
 	
-	# Replace the following line with your code.
+	for i in 1:m-1
+		column = memory[i, column][2]
+		push!(seam, column)
+	end
 	
-	# you should start by copying the code from 
-	# your (not-memoized) recursive_seam function.
+	return seam
 end
 
 # ╔═╡ d941c199-ed77-47dd-8b5a-e34b864f9a79
@@ -536,25 +600,51 @@ But in our particular case, we can use a matrix as a storage, since a matrix is 
 
 # ╔═╡ c8724b5e-f3bd-11ea-0034-b92af21ca12d
 function matrix_memoized_least_energy(energies, i, j, memory::Matrix)
-	m, n = size(energies)
+	if memory[i, j] != nothing
+		energy = memory[i, j][1]
+	else
+		m, n = size(energies)
 	
-	# Replace the following line with your code.
+		## base case
+		if i == m
+			energy = energies[i, j]
+			column = j
+		else
+
+			## induction
+
+			aux = [matrix_memoized_least_energy(energies, i+1, j´, memory) for j´ ∈ clamp(j-1, 1, n):clamp(j+1, 1, n)]
+			index = argmin(aux)
+
+			if j == 1
+				column = index
+			else
+				column = j - 2 + index
+			end
+
+			energy = energies[i, j] + aux[index]
+			memory[i, j] = energy, column
+		end
+	end
+	
+	return energy
 end
 
 # ╔═╡ be7d40e2-f320-11ea-1b56-dff2a0a16e8d
 function matrix_memoized_seam(energies, starting_pixel)
 	memory = Matrix{Union{Nothing, Tuple{Float64,Int}}}(nothing, size(energies))
-
-	# use me instead of you use a different element type:
-	# memory = Matrix{Any}(nothing, size(energies))
+	matrix_memoized_least_energy(energies, 1, starting_pixel, memory)
 	
-	
+	seam = [starting_pixel]
 	m, n = size(energies)
+	column = starting_pixel
 	
-	# Replace the following line with your code.
-	[starting_pixel for i=1:m]
+	for i in 1:m-1
+		column = memory[i, column][2]
+		push!(seam, column)
+	end
 	
-	
+	return seam
 end
 
 # ╔═╡ 507f3870-f3c5-11ea-11f6-ada3bb087634
@@ -581,7 +671,9 @@ function least_energy_matrix(energies)
 	m,n = size(energies)
 	
 	# your code here
-	
+	for i in m-1:-1:1, j in 1:n
+		result[i, j] += minimum([energies[i+1, k] for k ∈ clamp(j-1, 1, n):clamp(j+1, 1, n)])
+	end
 	
 	return result
 end
@@ -609,12 +701,7 @@ md"""
 
 # ╔═╡ 795eb2c4-f37b-11ea-01e1-1dbac3c80c13
 function seam_from_precomputed_least_energy(energies, starting_pixel::Int)
-	least_energies = least_energy_matrix(energies)
-	m, n = size(least_energies)
-	
-	# Replace the following line with your code.
-	[starting_pixel for i=1:m]
-	
+	return greedy_seam(least_energy_matrix(energies), starting_pixel)
 end
 
 # ╔═╡ 51df0c98-f3c5-11ea-25b8-af41dc182bac
@@ -982,12 +1069,12 @@ bigbreak
 # ╠═85033040-f372-11ea-2c31-bb3147de3c0d
 # ╟─f92ac3e4-fa70-4bcf-bc50-a36792a8baaa
 # ╠═7ac5eb8d-9dba-4700-8f3a-1e0b2addc740
-# ╠═9ff0ce41-327f-4bf0-958d-309cd0c0b6e5
+# ╟─9ff0ce41-327f-4bf0-958d-309cd0c0b6e5
 # ╟─c572f6ce-f372-11ea-3c9a-e3a21384edca
-# ╠═6d993a5c-f373-11ea-0dde-c94e3bbd1552
+# ╟─6d993a5c-f373-11ea-0dde-c94e3bbd1552
 # ╟─ea417c2a-f373-11ea-3bb0-b1b5754f2fac
 # ╟─56a7f954-f374-11ea-0391-f79b75195f4d
-# ╠═b1d09bc8-f320-11ea-26bb-0101c9a204e2
+# ╠═6b0fa07c-9b7f-47cf-8df6-267c143c4608
 # ╠═1947f304-fa2c-4019-8584-01ef44ef2859
 # ╟─8992172e-c5b6-463e-a06e-5fe42fb9b16b
 # ╠═b387f8e8-dced-473a-9434-5334829ecfd1

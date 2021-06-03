@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.14.0
+# v0.14.7
 
 using Markdown
 using InteractiveUtils
@@ -64,8 +64,8 @@ Students used to pure math are sometimes surprised to see numbers like `1e-15`, 
 
 """
 
-# ╔═╡ ea28bf57-ba62-41ce-8be6-d38ca2c5caa3
-
+# ╔═╡ 663f9a1f-2d21-417d-84b8-be6e2cf103b6
+set = [j for j ∈ 1:1000 if j*(1/j) != 1]
 
 # ╔═╡ a5901f93-007f-4a30-97fc-29b367ec47c6
 md"""
@@ -79,16 +79,10 @@ Is this an integer power of 2?  Which one? (`log2` might help.)
 """
 
 # ╔═╡ 8efcaaeb-4900-404b-ae59-65db0bde8790
-
-
-# ╔═╡ a5be0775-68de-41ce-95cd-1465723d099b
-
-
-# ╔═╡ 4abec609-09cd-4f86-8d86-a7d02325cc7b
-
+error = 1 .- set.*(1 ./ set)
 
 # ╔═╡ 32e073bb-943f-4fa9-b15f-5ec18feecf15
-
+log2.(error)
 
 # ╔═╡ 7d1e1724-cd1a-483b-af40-f24ae5301849
 md"""
@@ -100,13 +94,13 @@ Caculate all of the following:
 """
 
 # ╔═╡ d221c61c-a4ab-4a82-b89d-52735d957cae
-
+32 * 23 - 736
 
 # ╔═╡ c3d49b98-a9c1-4aba-becc-7fa84f4bbc75
-
+3.2 * 23 - 73.6
 
 # ╔═╡ 7b33c09c-2ef2-4b97-b5a5-5fdf9268f76b
-
+3.2 * 2.3 - 7.36
 
 # ╔═╡ 224acb51-c0db-4f04-b865-8349d6a28e98
 md"""
@@ -148,7 +142,7 @@ md"""
 """
 
 # ╔═╡ b0db7388-850c-11eb-0915-597f1fa5ab93
-ten_twelve = missing # Your code here
+ten_twelve = FirstRankOneMatrix(1:10, 1:12) # Your code here
 
 # ╔═╡ 7aac43b3-49ce-46ea-854b-d292ac0591c7
 md"""
@@ -187,7 +181,7 @@ md"""
 # ╔═╡ fada4734-8505-11eb-3f2b-d1f1ef391ba4
 function Base.size(M::FirstRankOneMatrix)
 	
-	return missing # Your code here
+	return length(M.v), length(M.w) # Your code here
 end
 
 # ╔═╡ 545a5916-8506-11eb-1a31-078957d791f8
@@ -198,7 +192,7 @@ md"""
 # ╔═╡ 590dfe1a-8506-11eb-0069-d7cd91f02a65
 function Base.getindex(M::FirstRankOneMatrix, i, j)
 	
-	return missing # Your code here
+	return M.v[i] * M.w[j] # Your code here
 end
 
 # ╔═╡ b9cb6192-8505-11eb-3d2c-790654bbc9a1
@@ -228,9 +222,27 @@ One possible workaround for this is to create a new function specifically to dis
 
 # ╔═╡ c7a15c5e-8505-11eb-3af2-2fa84b74b590
 function print_as_matrix(M::FirstRankOneMatrix)
+	m, n = size(M)
+	aux_func(v) = maximum(length.(reshape(permutedims(reduce(hcat, split.(string.(v), '.'))), :,2)), dims = 1)
+	sizes = aux_func(M[:, 1])
 	
-	# Your code here
+	for j ∈ 2:n
+		sizes = vcat(sizes, aux_func(M[:, j]))
+	end
+
+	sizes .+= 1
 	
+	for i ∈ 1:m
+		for j ∈ 1:n
+			aux = split(string(M[i, j]), '.')
+			if length(aux) == 1
+				print( lpad(aux[1], sizes[j, 1]) * rpad("", sizes[j, 2]) )
+			else
+				print( lpad(aux[1], sizes[j, 1]) * '.' * rpad(aux[2], sizes[j, 2]) )
+			end
+		end
+		println()
+	end
 end
 
 # ╔═╡ 9eb846c0-8737-11eb-101b-0191f715d8c9
@@ -270,11 +282,11 @@ In the cell above, we added a second ('outer') constructor that takes a single v
 👉 Make sure that you can use both constructors by trying them out below.
 """
 
-# ╔═╡ eb612772-8b06-44bb-a36a-827435cbb2ee
+# ╔═╡ 7f1b729d-eb84-4d1f-81b0-0336cb7c377e
+RankOneMatrix(1:0.1:2)
 
-
-# ╔═╡ d3e7c8d1-4b4a-47b6-9c96-150333078f42
-
+# ╔═╡ ec7f4dd1-8589-49b7-9aa8-ee1803fd3813
+RankOneMatrix(1:4,1:5)
 
 # ╔═╡ 3ed18ba0-850b-11eb-3e90-f188c54d9ce9
 md"""
@@ -284,13 +296,13 @@ md"""
 # ╔═╡ f2d8b45c-8501-11eb-1c6a-5f819c240d9d
 function Base.size(M::RankOneMatrix)
 	
-	return missing # Your code here
+	return length.((M.v, M.w)) # Your code here
 end
 
 # ╔═╡ ed72e880-8afa-11eb-3a4a-175a838188d9
 function Base.getindex(M::RankOneMatrix, i, j)
 	
-	return missing # Your code here
+	return M.v[i] * M.w[j] # Your code here
 end
 
 # ╔═╡ 7b3fb0ef-9a9e-401c-8c09-e5615134a4ad
@@ -345,7 +357,7 @@ md"""
 # ╔═╡ ee58251a-8511-11eb-074c-5b1e27c4ebd4
 function matvec(M::RankOneMatrix, x)
 	
-	return missing # Your code here
+	return dot(M.w, x) * M.v # Your code here
 end
 
 # ╔═╡ 4864e4d6-850c-11eb-210c-0318b8660a9a
@@ -390,7 +402,7 @@ md"""
 """
 
 # ╔═╡ f5a95dd8-850d-11eb-2aa7-2dcb1868577f
-
+RankTwoMatrix(1.0:10, 0:0.1:0.9)
 
 # ╔═╡ dc714540-8afa-11eb-205b-7770074771c8
 md"""
@@ -401,13 +413,13 @@ md"""
 # ╔═╡ c784e02c-8502-11eb-3efa-7f4c45f4274c
 function Base.getindex(M::RankTwoMatrix, i, j)
 
-	return missing # Your code here
+	return M.A[i, j] + M.B[i, j] # Your code here
 end
 
 # ╔═╡ 0bab818e-8503-11eb-02b3-178098599847
 function Base.size(M::RankTwoMatrix)
 	
-	return missing # Your code here
+	return size(M.A) # Your code here
 end
 
 # ╔═╡ aca709f0-8503-11eb-1144-1fc01cb85c39
@@ -422,10 +434,14 @@ We can go even further and make a general custom type `LowRankMatrix` for rank-$
 """
 
 # ╔═╡ b6717812-8503-11eb-2729-39bfdc1fd2f9
-struct LowRankMatrix <: AbstractMatrix{Float64}
-	# Your code here
-	Ms::Vector{RankOneMatrix}
-	rank::Int
+begin
+	struct LowRankMatrix <: AbstractMatrix{Float64}
+		# Your code here
+		Ms::Vector{RankOneMatrix}
+		rank::Int
+	end
+	
+	LowRankMatrix(Ms::Vector{RankOneMatrix}) = LowRankMatrix(Ms, length(Ms))
 end
 
 # ╔═╡ 6e280730-8b00-11eb-04b7-615a389e792f
@@ -437,7 +453,7 @@ md"""
 # ╔═╡ c49e350e-8503-11eb-15de-7308dd03dc08
 function Base.getindex(M::LowRankMatrix, i, j)
 	
-	return missing # Your code here
+	return sum(getindex.(M.Ms, i, j)) # Your code here
 end
 
 # ╔═╡ fe6df9bf-6059-4b76-af39-385d395ece72
@@ -449,7 +465,7 @@ Base.getindex(R2, 2, 3)
 # ╔═╡ dd27f508-8503-11eb-36b9-33f5f99f78b0
 function Base.size(M::LowRankMatrix)
 	
-	return missing # Your code here
+	return size(first(M.Ms)) # Your code here
 end
 
 # ╔═╡ 0b7c6cbe-57de-419d-adcb-8724791f9c89
@@ -472,8 +488,9 @@ md"""
 
 # ╔═╡ 3fed837a-8512-11eb-1fdd-c1b72b48d07b
 function matvec(M::LowRankMatrix, x)
+	aux_func(mat) = matvec(mat, x)
 	
-	return missing # Your code here
+	return sum(aux_func.(M.Ms)) # Your code here
 end
 
 # ╔═╡ 2d65bd1a-8512-11eb-1bd2-0313588dfa0e
@@ -487,9 +504,7 @@ One of the big advantages of our rank-1 matrices is its space efficiency: to "st
 # ╔═╡ f9556098-8504-11eb-08a0-39fbe00892da
 answer = md"""
 
-From rank ...
-
-Because ....
+From rank $k = n / 2$ because the number of saved entries for a rank-k matrices is $2kn$ and equals to the $n^2$ entries of a dense matrix when $k = n / 2$.
 """
 
 # ╔═╡ 295acdac-880a-402e-9f7e-19b0fc801130
@@ -517,7 +532,7 @@ md"""
 """
 
 # ╔═╡ 210392ff-0a22-4e55-be08-9f58804282cf
-singular_values_of_biggie = missing
+singular_values_of_biggie = svd(biggie).S
 
 # ╔═╡ bb649c89-709c-49c8-8111-53044e8e682a
 md"""
@@ -544,7 +559,7 @@ Keep things simple. Inside your method, call `LinearAlgebra.svd` on a type that 
 # ╔═╡ 6c9ae344-084e-459c-841c-8377451507fd
 function LinearAlgebra.svd(A::RankOneMatrix)
 	
-	return missing
+	return LinearAlgebra.svd(A.v * A.w')
 end
 
 # ╔═╡ 9ae28bc5-d9cb-479d-8c22-7c9248cd5fa0
@@ -557,14 +572,16 @@ md"""
 """
 
 # ╔═╡ ed4b7ea5-3266-466d-a817-7ab2cc82ac9c
-
+md"""
+Only one of the three singular values is approximately non-zero. I would guess that the number of non-zero, singular values equals the rank of the matrix.
+"""
 
 # ╔═╡ 5c6aee48-017b-49ff-af1a-a31af30a45a9
 md"""
 
 This number (the number of singular values that are positive) is something you will (or have) learn(ed) in a linear algebra class: it is known as the *rank* of a matrix, and is usually defined through a complicated elimination procedure.
 
-👉 Write a function `numerical_rank` that calculates the singular values of a matrix `A`, and returns how many of them are approximately zero.
+👉 Write a function `numerical_rank` that calculates the singular values of a matrix `A`, and returns how many of them are approximately non-zero.
 
 To keep things simple, you can assume that "approximately zero" means: less than `tol=1e5`.
 """
@@ -572,7 +589,7 @@ To keep things simple, you can assume that "approximately zero" means: less than
 # ╔═╡ a2b7f0c3-488b-4ce9-aed6-b8ccddac6a57
 function numerical_rank(A::AbstractMatrix; tol=1e-5)
 	
-	return missing
+	return sum(svdvals(A) .> tol)
 end
 
 # ╔═╡ d3420859-d558-47cb-aaf7-d51a5e2d1f6e
@@ -595,7 +612,7 @@ md"""
 # ╔═╡ 01b12200-2e7e-4f19-96b9-5b6d6cb03233
 function k_rank_ones(k, m, n)
 	
-	return missing
+	return sum( RankOneMatrix(rand(m), rand(n)) for i = 1:k )
 end
 
 # ╔═╡ e1e1067b-93ba-40df-bd09-7599538e6181
@@ -608,16 +625,22 @@ md"""
 """
 
 # ╔═╡ a6bb92f9-0cb2-4fdd-8b67-f286edbbdcb6
-
+numerical_rank(k_rank_ones(1, 2, 3))
 
 # ╔═╡ 57c19601-122b-414f-bc99-56f98c794e61
-
+numerical_rank(k_rank_ones(2, 2, 2))
 
 # ╔═╡ 9813e9f9-9970-4a8b-b3ca-e6a699e6fda4
-
+numerical_rank(k_rank_ones(3, 4, 3))
 
 # ╔═╡ c8829a12-917a-4ff4-87c9-fe2b25aaa99c
+numerical_rank(k_rank_ones(2, 1, 2))
 
+# ╔═╡ b55312a6-5582-4fe3-8041-f95fe1b1aaa4
+numerical_rank(k_rank_ones(3, 2, 3))
+
+# ╔═╡ b4cff192-f4c6-41fc-96e6-aeb25f7b59b3
+numerical_rank(k_rank_ones(3, 2, 2))
 
 # ╔═╡ 5aabbec1-a079-4936-9cd1-9c25fe5700e6
 md"## Function library
@@ -1117,12 +1140,10 @@ bigbreak
 # ╠═8c8388cf-9891-423c-8db2-d40d870bb38e
 # ╟─4ce0e43d-63d6-4cb2-88b8-8ba80e17012a
 # ╟─ac35c6b3-a142-4b7a-921b-a2bfe1d84713
-# ╠═ea28bf57-ba62-41ce-8be6-d38ca2c5caa3
+# ╠═663f9a1f-2d21-417d-84b8-be6e2cf103b6
 # ╟─a759c4d5-ca00-4dda-b39c-1093ba9bef0e
 # ╟─a5901f93-007f-4a30-97fc-29b367ec47c6
 # ╠═8efcaaeb-4900-404b-ae59-65db0bde8790
-# ╠═a5be0775-68de-41ce-95cd-1465723d099b
-# ╠═4abec609-09cd-4f86-8d86-a7d02325cc7b
 # ╠═32e073bb-943f-4fa9-b15f-5ec18feecf15
 # ╟─7d1e1724-cd1a-483b-af40-f24ae5301849
 # ╠═d221c61c-a4ab-4a82-b89d-52735d957cae
@@ -1164,8 +1185,8 @@ bigbreak
 # ╟─a75f3c76-8506-11eb-1d83-cf5781b656a3
 # ╠═b577420c-8501-11eb-267a-719125315fe1
 # ╟─1d16e228-850e-11eb-1dca-41df85b706da
-# ╠═eb612772-8b06-44bb-a36a-827435cbb2ee
-# ╠═d3e7c8d1-4b4a-47b6-9c96-150333078f42
+# ╠═7f1b729d-eb84-4d1f-81b0-0336cb7c377e
+# ╠═ec7f4dd1-8589-49b7-9aa8-ee1803fd3813
 # ╟─7493be50-8738-11eb-37e7-990f1656998a
 # ╟─3ed18ba0-850b-11eb-3e90-f188c54d9ce9
 # ╠═f2d8b45c-8501-11eb-1c6a-5f819c240d9d
@@ -1211,7 +1232,7 @@ bigbreak
 # ╟─863f4490-8b06-11eb-352b-61cec188ae57
 # ╟─f7fb3b32-8b00-11eb-0c0e-8f8d68f849a6
 # ╟─2d65bd1a-8512-11eb-1bd2-0313588dfa0e
-# ╠═f9556098-8504-11eb-08a0-39fbe00892da
+# ╟─f9556098-8504-11eb-08a0-39fbe00892da
 # ╟─35d22fd9-9cfc-47c5-8adb-a01f14586be3
 # ╟─295acdac-880a-402e-9f7e-19b0fc801130
 # ╠═54778212-3702-467d-8a96-4fa18b3ccd63
@@ -1230,7 +1251,7 @@ bigbreak
 # ╠═9ae28bc5-d9cb-479d-8c22-7c9248cd5fa0
 # ╟─29db89d6-ac40-4121-b996-e083555bc5db
 # ╟─0cf29d7e-bd83-4c5f-bd41-e8e7c2587188
-# ╠═ed4b7ea5-3266-466d-a817-7ab2cc82ac9c
+# ╟─ed4b7ea5-3266-466d-a817-7ab2cc82ac9c
 # ╟─5c6aee48-017b-49ff-af1a-a31af30a45a9
 # ╠═a2b7f0c3-488b-4ce9-aed6-b8ccddac6a57
 # ╠═d3420859-d558-47cb-aaf7-d51a5e2d1f6e
@@ -1245,6 +1266,8 @@ bigbreak
 # ╠═57c19601-122b-414f-bc99-56f98c794e61
 # ╠═9813e9f9-9970-4a8b-b3ca-e6a699e6fda4
 # ╠═c8829a12-917a-4ff4-87c9-fe2b25aaa99c
+# ╠═b55312a6-5582-4fe3-8041-f95fe1b1aaa4
+# ╠═b4cff192-f4c6-41fc-96e6-aeb25f7b59b3
 # ╟─a5234680-8b02-11eb-2574-15489d0d49ea
 # ╟─5aabbec1-a079-4936-9cd1-9c25fe5700e6
 # ╟─42d6b87d-b4c3-4ccb-aceb-d1b020135f47
